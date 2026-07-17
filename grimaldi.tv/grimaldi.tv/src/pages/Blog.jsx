@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { studioSupabase } from '@/lib/studioSupabaseClient';
 import { motion } from 'framer-motion';
-import { Calendar, Newspaper } from 'lucide-react';
+import { Calendar, Newspaper, Rss } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -32,9 +32,20 @@ export default function Blog() {
       />
       <div className="fixed inset-0 bg-background/60 backdrop-blur-md -z-10" />
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-2">
-          <Newspaper className="w-6 h-6 text-primary" />
-          <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">Blog</h1>
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <Newspaper className="w-6 h-6 text-primary" />
+            <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">Blog</h1>
+          </div>
+          <a
+            href="/rss.xml"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors border border-primary/20"
+          >
+            <Rss className="w-3.5 h-3.5" />
+            <span>RSS Feed</span>
+          </a>
         </div>
         <p className="text-muted-foreground text-lg mb-12">Commentary and analysis from Drew Grimaldi</p>
 
