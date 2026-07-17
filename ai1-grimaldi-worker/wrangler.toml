@@ -1,0 +1,13 @@
+name = "ai1"
+main = "index.js"
+compatibility_date = "2026-07-10"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+AIRTABLE_BASE_ID = "appnbWauDhdcM7mS9"
+AIRTABLE_BETS_TABLE_ID = "tbl9X3RoO9uY4jOhL"
+AIRTABLE_STATS_URL = "https://airtable.com/appnbWauDhdcM7mS9/pbdsWjmiOEA55XPnr"
+
+[[routes]]
+pattern = "ai1.grimaldi.tv"
+custom_domain = true

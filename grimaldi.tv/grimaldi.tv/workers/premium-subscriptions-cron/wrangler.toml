@@ -1,0 +1,11 @@
+name = "grimaldi-tv-premium-subscriptions-cron"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Runs daily at 09:00 UTC. Adjust as you like: https://crontab.guru
+[triggers]
+crons = ["0 9 * * *"]
+
+# Set these with `wrangler secret put SUPABASE_URL` and
+# `wrangler secret put SUPABASE_SERVICE_ROLE_KEY` — never commit the
+# service role key to git.
