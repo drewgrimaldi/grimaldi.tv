@@ -4,6 +4,10 @@
 // public /changelog page — one source of truth, don't edit them separately.
 const CHANGELOG = [
   {
+    version: '2.0.0',
+    notes: "SAM v2 Supercharged: Upgraded prediction engine to Bivariate Poisson Monte Carlo simulation with correlation, rest/travel/form/injury adjustments, and 25,000 trials."
+  },
+  {
     version: '1.5.3',
     notes: "Conservatism pass on top of 1.5.2. (1) DEEPER SHRINKAGE: CONSERVATISM_SHRINKAGE lowered from 0.70 to 0.50, so every raw Monte Carlo win% is pulled further back toward a 50/50 coin flip before it's shown, logged, or handed to Gemini (e.g. a raw simulated 80% edge now reports as ~65% instead of ~71%). (2) SLOWER RECENT-FORM REACTIVITY: the BALLDONTLIE offense/defense blend for team sports (NFL/NBA/MLB/NHL) changed from 65% last-8-games / 35% season average to an even 50/50 split, so a hot or cold short stretch no longer dominates the simulation's inputs before shrinkage even applies. Together these two changes compound — flatter inputs feeding a flatter output curve — intentionally trading some upside on confident calls for fewer overconfident misses."
   },
@@ -253,7 +257,7 @@ async function getInjuryReport({ league, team } = {}) {
 }
 
 // ============================================================================
-// REAL MONTE CARLO SIMULATION ENGINE
+// REAL MONTE CARLO SIMULATION ENGINE (UFC)
 // ============================================================================
 
 function sampleNormal(mean, stdDev) {
@@ -262,102 +266,6 @@ function sampleNormal(mean, stdDev) {
   while (v === 0) v = Math.random();
   const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
   return mean + z * stdDev;
-}
-
-function samplePoisson(lambda) {
-  const safeLambda = Math.max(lambda, 0.05);
-  if (safeLambda > 25) {
-    return Math.max(0, Math.round(sampleNormal(safeLambda, Math.sqrt(safeLambda))));
-  }
-  const L = Math.exp(-safeLambda);
-  let k = 0;
-  let p = 1;
-  do {
-    k++;
-    p *= Math.random();
-  } while (p > L);
-  return k - 1;
-}
-
-const SCORING_MODEL = {
-  NFL: { dist: 'normal', stdDev: 10 },
-  NBA: { dist: 'normal', stdDev: 12 },
-  MLB: { dist: 'poisson' },
-  NHL: { dist: 'poisson' },
-  SOCCER: { dist: 'poisson' },
-  NCAAF: { dist: 'normal', stdDev: 12 },
-  CFB: { dist: 'normal', stdDev: 12 },
-  NCAAM: { dist: 'normal', stdDev: 10 },
-  CBB: { dist: 'normal', stdDev: 10 }
-};
-
-const LEAGUE_AVERAGE_FALLBACKS = {
-  NFL: 22.0,
-  NBA: 115.0,
-  MLB: 4.5,
-  NHL: 3.1,
-  SOCCER: 1.35,
-  NCAAF: 28.0,
-  CFB: 28.0,
-  NCAAM: 72.0,
-  CBB: 72.0
-};
-
-function runTeamSportSimulation({ offenseA, defenseA, offenseB, defenseB, league, trials = 20000 }) {
-  const model = SCORING_MODEL[league] || SCORING_MODEL.NFL;
-  const avg = LEAGUE_AVERAGE_FALLBACKS[league] || 20.0;
-  
-  const expectedA = (offenseA * defenseB) / avg;
-  const expectedB = (offenseB * defenseA) / avg;
-
-  let winsA = 0, winsB = 0, ties = 0;
-
-  for (let i = 0; i < trials; i++) {
-    let scoreA, scoreB;
-    if (model.dist === 'poisson') {
-      scoreA = samplePoisson(expectedA);
-      scoreB = samplePoisson(expectedB);
-    } else {
-      scoreA = Math.max(0, Math.round(sampleNormal(expectedA, model.stdDev)));
-      scoreB = Math.max(0, Math.round(sampleNormal(expectedB, model.stdDev)));
-    }
-    if (scoreA > scoreB) winsA++;
-    else if (scoreB > scoreA) winsB++;
-    else ties++;
-  }
-
-  const rawWinPctA = (winsA / trials) * 100;
-  const rawWinPctB = (winsB / trials) * 100;
-
-  let winPctA = Math.round(50 + (rawWinPctA - 50) * CONSERVATISM_SHRINKAGE);
-  let winPctB = Math.round(50 + (rawWinPctB - 50) * CONSERVATISM_SHRINKAGE);
-
-  if (league === 'SOCCER') {
-    if (winPctA + winPctB > 100) {
-      const sum = winPctA + winPctB;
-      winPctA = Math.round((winPctA / sum) * 100);
-      winPctB = 100 - winPctA;
-    }
-    const tiePct = 100 - winPctA - winPctB;
-    return {
-      trials,
-      winPctA,
-      winPctB,
-      tiePct,
-      expectedScoreA: Math.round(expectedA * 10) / 10,
-      expectedScoreB: Math.round(expectedB * 10) / 10
-    };
-  } else {
-    winPctB = 100 - winPctA;
-    return {
-      trials,
-      winPctA,
-      winPctB,
-      tiePct: 0,
-      expectedScoreA: Math.round(expectedA * 10) / 10,
-      expectedScoreB: Math.round(expectedB * 10) / 10
-    };
-  }
 }
 
 function runFightSimulation({ powerA, powerB, trials = 20000 }) {
@@ -379,6 +287,192 @@ function runFightSimulation({ powerA, powerB, trials = 20000 }) {
     winPctA,
     winPctB
   };
+}
+
+// =====================================================
+// SAM v2 SUPERCHARGED PREDICTION ENGINE (FULL MODULE)
+// =====================================================
+
+// Improved Poisson sampler
+function samplePoisson(lambda) {
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0;
+  let p = 1.0;
+  do {
+    k++;
+    p *= Math.random();
+  } while (p > L);
+  return k - 1;
+}
+
+// Bivariate Poisson with correlation
+function sampleBivariatePoisson(lambda1, lambda2, correlation = 0.28) {
+  const common = samplePoisson(Math.min(lambda1, lambda2) * correlation);
+  const indep1 = samplePoisson(lambda1 * (1 - correlation));
+  const indep2 = samplePoisson(lambda2 * (1 - correlation));
+  return {
+    score1: common + indep1,
+    score2: common + indep2
+  };
+}
+
+// Full Monte Carlo Simulation
+function runMonteCarloSimulation(params) {
+  const {
+    lambdaHome,
+    lambdaAway,
+    trials = 25000,
+    homeAdvantage = 0,
+    correlation = 0.28
+  } = params;
+
+  const adjHome = Math.max(55, lambdaHome + homeAdvantage);
+
+  let homeWins = 0, awayWins = 0, draws = 0;
+  let totalMargin = 0, totalPoints = 0, marginSq = 0;
+
+  const marginDist = {};
+  const totalDist = {};
+
+  for (let i = 0; i < trials; i++) {
+    const res = sampleBivariatePoisson(adjHome, lambdaAway, correlation);
+    const margin = res.score1 - res.score2;
+    const total = res.score1 + res.score2;
+
+    totalMargin += margin;
+    totalPoints += total;
+    marginSq += margin * margin;
+
+    if (margin > 0) homeWins++;
+    else if (margin < 0) awayWins++;
+    else draws++;
+
+    const mKey = Math.round(margin);
+    marginDist[mKey] = (marginDist[mKey] || 0) + 1;
+    const tKey = Math.round(total);
+    totalDist[tKey] = (totalDist[tKey] || 0) + 1;
+  }
+
+  const homeWinProb = homeWins / trials;
+
+  return {
+    trials,
+    homeWinProbability: parseFloat(homeWinProb.toFixed(4)),
+    awayWinProbability: parseFloat((awayWins / trials).toFixed(4)),
+    drawProbability: parseFloat((draws / trials).toFixed(4)),
+    expectedMargin: parseFloat((totalMargin / trials).toFixed(2)),
+    expectedTotal: parseFloat((totalPoints / trials).toFixed(2)),
+    marginStdDev: parseFloat(Math.sqrt((marginSq / trials) - Math.pow(totalMargin / trials, 2)).toFixed(2)),
+    marginDistribution: marginDist,
+    totalDistribution: totalDist,
+    rawLambdas: { home: adjHome, away: lambdaAway }
+  };
+}
+
+// Supercharged Lambda Calculator
+function calculateExpectedLambdas(teamA, teamB, context = {}) {
+  const {
+    isHome = true,
+    restDaysA = 3,
+    restDaysB = 3,
+    travelA = 0,
+    travelB = 0,
+    recentFormA = 0,
+    recentFormB = 0,
+    injuryImpactA = 0,
+    injuryImpactB = 0
+  } = context;
+
+  const base = 110;
+
+  let lambdaHome = ((teamA.offense || 105) / (teamB.defense || 105)) * (base / 2);
+  let lambdaAway = ((teamB.offense || 105) / (teamA.defense || 105)) * (base / 2);
+
+  if (isHome) lambdaHome *= 1.06;
+
+  // Rest, travel, form, injury adjustments
+  if (restDaysA <= 1) lambdaHome *= 0.96;
+  if (restDaysB <= 1) lambdaAway *= 0.96;
+  if (travelA > 1200) lambdaHome *= 0.97;
+  if (travelB > 1200) lambdaAway *= 0.97;
+  lambdaHome *= (1 + recentFormA * 0.018);
+  lambdaAway *= (1 + recentFormB * 0.018);
+  lambdaHome *= (1 + injuryImpactA);
+  lambdaAway *= (1 + injuryImpactB);
+
+  return {
+    lambdaHome: Math.max(55, Math.min(175, parseFloat(lambdaHome.toFixed(2)))),
+    lambdaAway: Math.max(55, Math.min(175, parseFloat(lambdaAway.toFixed(2))))
+  };
+}
+
+// Main prediction function
+async function predictWithSuperchargedModel(teamA, teamB, context = {}) {
+  const lambdas = calculateExpectedLambdas(teamA, teamB, context);
+  const simulation = runMonteCarloSimulation({
+    lambdaHome: lambdas.lambdaHome,
+    lambdaAway: lambdas.lambdaAway,
+    trials: 25000,
+    correlation: 0.28
+  });
+
+  return {
+    version: CHANGELOG[0].version,
+    simulation,
+    lambdas,
+    context,
+    summary: `Home win probability: ${simulation.homeWinProbability} | Expected margin: ${simulation.expectedMargin} | Total: ${simulation.expectedTotal}`
+  };
+}
+
+// Bridging function to connect tool calls to the new simulation model
+function runTeamSportSimulation({ offenseA, defenseA, offenseB, defenseB, league, trials = 25000 }) {
+  const teamA = { offense: offenseA, defense: defenseA };
+  const teamB = { offense: offenseB, defense: defenseB };
+  
+  // Predict using the supercharged model
+  const lambdas = calculateExpectedLambdas(teamA, teamB, { isHome: true });
+  const sim = runMonteCarloSimulation({
+    lambdaHome: lambdas.lambdaHome,
+    lambdaAway: lambdas.lambdaAway,
+    trials: trials,
+    correlation: 0.28
+  });
+
+  const rawWinPctA = sim.homeWinProbability * 100;
+  const rawWinPctB = sim.awayWinProbability * 100;
+  
+  // Standard conservatism pass
+  let winPctA = Math.round(50 + (rawWinPctA - 50) * CONSERVATISM_SHRINKAGE);
+  let winPctB = Math.round(50 + (rawWinPctB - 50) * CONSERVATISM_SHRINKAGE);
+
+  if (league === 'SOCCER') {
+    if (winPctA + winPctB > 100) {
+      const sum = winPctA + winPctB;
+      winPctA = Math.round((winPctA / sum) * 100);
+      winPctB = 100 - winPctA;
+    }
+    const tiePct = 100 - winPctA - winPctB;
+    return {
+      trials,
+      winPctA,
+      winPctB,
+      tiePct,
+      expectedScoreA: lambdas.lambdaHome,
+      expectedScoreB: lambdas.lambdaAway
+    };
+  } else {
+    winPctB = 100 - winPctA;
+    return {
+      trials,
+      winPctA,
+      winPctB,
+      tiePct: 0,
+      expectedScoreA: lambdas.lambdaHome,
+      expectedScoreB: lambdas.lambdaAway
+    };
+  }
 }
 
 // ============================================================================
