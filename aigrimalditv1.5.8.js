@@ -4184,8 +4184,8 @@ function loginPageHtml({ error, redirect = "" } = {}) {
     ${redirect ? `<input type="hidden" name="redirect" value="${redirect.replace(/"/g, "&quot;")}">` : ""}
     ${redirect ? `<div class="notice">Sign in or create an account to attach your predictions.</div>` : ""}
     ${error ? `<div class="error">${error}</div>` : ""}
-    <label for="username">Username</label>
-    <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+    <label for="username">Username or Email</label>
+    <input type="text" id="username" name="username" placeholder="Enter username or email address" autocomplete="username" required autofocus>
     <label for="password">Password</label>
     <input type="password" id="password" name="password" autocomplete="current-password" required>
     <button type="submit">Sign In</button>
