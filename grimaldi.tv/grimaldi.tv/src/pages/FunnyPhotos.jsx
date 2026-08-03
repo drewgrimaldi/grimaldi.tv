@@ -1,7 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Image, Plus, X, Upload, Share2 } from 'lucide-react';
+import { Image, Plus, X, Upload, Share2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/AuthContext';
@@ -9,11 +9,13 @@ import EmailGate from '../components/episodes/EmailGate';
 import { Link } from 'react-router-dom';
 
 export default function FunnyPhotos() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const isAdmin = user?.role === 'admin';
 
   const [unlocked, setUnlocked] = useState(() => !!localStorage.getItem('dgp_subscriber_email'));
+  const isUnlocked = isAuthenticated || unlocked;
+
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
@@ -35,8 +37,6 @@ export default function FunnyPhotos() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['funny-photos'] }),
   });
 
-  if (!unlocked) return <EmailGate onUnlock={() => setUnlocked(true)} />;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -46,15 +46,28 @@ export default function FunnyPhotos() {
     setUploading(false);
   };
 
+  const visiblePhotos = isUnlocked ? photos : photos.slice(0, 3);
+  const showGate = !isUnlocked && photos.length > 3;
+
   return (
     <div className="min-h-screen py-24 px-6 relative">
       <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('/main-banner.jpg')" }} />
       <div className="fixed inset-0 bg-background/60 backdrop-blur-md -z-10" />
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-end justify-between mb-10">
+        <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Image className="w-6 h-6 text-primary" />
-            <div><h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">Photo Gallery</h1><p className="mt-1 text-muted-foreground text-lg">A collection of laughs</p></div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">Photo Gallery</h1>
+                {!isUnlocked && (
+                  <span className="text-xs bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+                    <Lock className="w-3 h-3" /> 3 Free Photos Preview
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-muted-foreground text-lg">A collection of laughs</p>
+            </div>
           </div>
           {isAdmin && <Button onClick={() => setShowForm(!showForm)} size="lg" className="gap-2 bg-primary hover:bg-primary/90 rounded-full px-8 text-base font-bold shadow-lg shadow-primary/30"><Plus className="w-5 h-5" /> Add Photo</Button>}
         </div>
@@ -83,44 +96,59 @@ export default function FunnyPhotos() {
         ) : photos.length === 0 ? (
           <p className="text-center text-muted-foreground py-20 text-lg">No funny photos yet — check back soon!</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {photos.map((photo) => (
-              <div key={photo.id} className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-primary/30 transition-all duration-300 aspect-square flex flex-col">
-                <Link to={`/FunnyPhotos/${photo.id}`} className="flex-1 flex items-center justify-center bg-secondary overflow-hidden">
-                  <img src={photo.image_url} alt={photo.title || 'Funny photo'} className="w-full h-full object-contain" />
-                </Link>
-                {(photo.title || photo.caption) && (
-                  <div className="p-3 bg-card/80 backdrop-blur-sm border-t border-border/50">
-                    {photo.title && <p className="text-sm font-semibold text-foreground line-clamp-1">{photo.title}</p>}
-                    {photo.caption && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{photo.caption}</p>}
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={async () => {
-                      const url = `${window.location.origin}/FunnyPhotos/${photo.id}`;
-                      if (navigator.share) {
-                        try {
-                          await navigator.share({ title: photo.title || 'Funny Photo', url });
-                        } catch {
-                          // user cancelled the share sheet
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visiblePhotos.map((photo) => (
+                <div key={photo.id} className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-primary/30 transition-all duration-300 aspect-square flex flex-col">
+                  <Link to={`/FunnyPhotos/${photo.id}`} className="flex-1 flex items-center justify-center bg-secondary overflow-hidden">
+                    <img src={photo.image_url} alt={photo.title || 'Funny photo'} className="w-full h-full object-contain" />
+                  </Link>
+                  {(photo.title || photo.caption) && (
+                    <div className="p-3 bg-card/80 backdrop-blur-sm border-t border-border/50">
+                      {photo.title && <p className="text-sm font-semibold text-foreground line-clamp-1">{photo.title}</p>}
+                      {photo.caption && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{photo.caption}</p>}
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={async () => {
+                        const url = `${window.location.origin}/FunnyPhotos/${photo.id}`;
+                        if (navigator.share) {
+                          try {
+                            await navigator.share({ title: photo.title || 'Funny Photo', url });
+                          } catch {
+                            // user cancelled the share sheet
+                          }
+                        } else {
+                          await navigator.clipboard.writeText(url);
+                          alert('Link copied!');
                         }
-                      } else {
-                        await navigator.clipboard.writeText(url);
-                        alert('Link copied!');
-                      }
-                    }}
-                    className="bg-black/60 rounded-full p-1 text-white hover:bg-primary"
-                  >
-                    <Share2 className="w-3 h-3" />
-                  </button>
-                  {isAdmin && <button onClick={() => deleteMutation.mutate(photo.id)} className="bg-black/60 rounded-full p-1 text-white hover:bg-red-600"><X className="w-3 h-3" /></button>}
+                      }}
+                      className="bg-black/60 rounded-full p-1 text-white hover:bg-primary"
+                    >
+                      <Share2 className="w-3 h-3" />
+                    </button>
+                    {isAdmin && <button onClick={() => deleteMutation.mutate(photo.id)} className="bg-black/60 rounded-full p-1 text-white hover:bg-red-600"><X className="w-3 h-3" /></button>}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {showGate && (
+              <div className="mt-16">
+                <EmailGate
+                  onUnlock={() => setUnlocked(true)}
+                  title="Unlock Full Photo Gallery"
+                  description={`You're viewing 3 free photos. Sign in or enter your email below to unlock the remaining ${photos.length - 3} photos in the gallery.`}
+                  buttonText="Unlock Gallery →"
+                  icon={Lock}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 }
+

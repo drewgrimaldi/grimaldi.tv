@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { studioSupabase } from '@/lib/studioSupabaseClient';
-import { Calendar, ArrowLeft, Share2 } from 'lucide-react';
+import { Calendar, ArrowLeft, Share2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import EmailGate from '../components/episodes/EmailGate';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function BlogPost() {
   const { slug } = useParams();
+  const { isAuthenticated } = useAuth();
   const [unlocked, setUnlocked] = useState(() => !!localStorage.getItem('dgp_subscriber_email'));
+  const isUnlocked = isAuthenticated || unlocked;
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['studio-blog-posts'],
@@ -24,7 +27,10 @@ export default function BlogPost() {
     },
   });
 
-  const post = posts.find((p) => p.slug === slug);
+  const postIndex = posts.findIndex((p) => p.slug === slug);
+  const post = postIndex !== -1 ? posts[postIndex] : null;
+  const isFreePost = postIndex !== -1 && postIndex < 3;
+  const canAccess = isUnlocked || isFreePost;
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -40,8 +46,6 @@ export default function BlogPost() {
     }
   };
 
-  if (!unlocked) return <EmailGate onUnlock={() => setUnlocked(true)} />;
-
   if (isLoading) {
     return <div className="min-h-screen py-24 px-6" />;
   }
@@ -51,6 +55,42 @@ export default function BlogPost() {
       <div className="min-h-screen py-24 px-6 text-center">
         <p className="text-muted-foreground text-lg mb-4">Post not found — it may have been unpublished.</p>
         <Link to="/Blog" className="text-primary hover:underline">Back to Blog</Link>
+      </div>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen py-24 px-6 relative">
+        <div
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+          style={{ backgroundImage: "url('/main-banner.jpg')" }}
+        />
+        <div className="fixed inset-0 bg-background/70 backdrop-blur-md -z-10" />
+
+        <div className="max-w-2xl mx-auto">
+          <Link to="/Blog" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to Blog
+          </Link>
+
+          <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 mb-8 text-center">
+            {post.category && (
+              <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide inline-block mb-3">
+                {post.category}
+              </span>
+            )}
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">{post.title}</h1>
+            {post.excerpt && <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">{post.excerpt}</p>}
+          </div>
+
+          <EmailGate
+            onUnlock={() => setUnlocked(true)}
+            title="Sign in or enter email to read full post"
+            description="This post is reserved for members and subscribers. Enter your email below or sign in to continue reading."
+            buttonText="Unlock Full Post →"
+            icon={Lock}
+          />
+        </div>
       </div>
     );
   }
@@ -100,3 +140,4 @@ export default function BlogPost() {
     </div>
   );
 }
+

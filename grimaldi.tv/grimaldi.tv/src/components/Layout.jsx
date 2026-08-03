@@ -1,8 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogIn, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Footer from './Footer';
+import { useAuth } from '@/lib/AuthContext';
 
 const navLinks = [
   { label: 'Home', path: '/Home' },
@@ -28,6 +29,7 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const isLive = useIsLiveNow();
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-[rgba(25,25,200,1)] flex flex-col relative overflow-x-hidden">
@@ -102,6 +104,24 @@ export default function Layout() {
                 </Link>
               );
             })}
+
+            {isAuthenticated ? (
+              <button
+                onClick={() => logout(false)}
+                className="flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-full transition-colors ml-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Log Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-xs font-semibold bg-white text-blue-950 hover:bg-slate-100 px-3.5 py-1.5 rounded-full transition-colors ml-2 shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -150,6 +170,25 @@ export default function Layout() {
                     </Link>
                   );
                 })}
+
+                <div className="pt-6">
+                  {isAuthenticated ? (
+                    <button
+                      onClick={() => { logout(false); setMenuOpen(false); }}
+                      className="w-full flex items-center justify-center gap-2 text-sm font-semibold bg-white/10 text-white py-2.5 rounded-xl"
+                    >
+                      <LogOut className="w-4 h-4" /> Log Out ({user?.email?.split('@')[0] || 'User'})
+                    </button>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setMenuOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 text-sm font-bold bg-white text-blue-950 py-2.5 rounded-xl shadow-md"
+                    >
+                      <LogIn className="w-4 h-4" /> Sign In
+                    </Link>
+                  )}
+                </div>
               </div>
             </motion.aside>
           </>
@@ -166,3 +205,4 @@ export default function Layout() {
     </div>
   );
 }
+

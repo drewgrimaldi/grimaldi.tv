@@ -12,12 +12,14 @@ import AdminEpisodeForm from '../components/episodes/AdminEpisodeForm';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Episodes() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.role === 'admin';
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState('');
   const [unlocked, setUnlocked] = useState(() => !!localStorage.getItem('dgp_subscriber_email'));
+
+  const isUnlocked = isAuthenticated || unlocked;
 
   const { data: episodes = [], isLoading } = useQuery({
     queryKey: ['episodes-all-v2'],
@@ -30,7 +32,7 @@ export default function Episodes() {
     return dateB - dateA;
   });
 
-  if (!unlocked) return <EmailGate onUnlock={() => setUnlocked(true)} />;
+  if (!isUnlocked) return <EmailGate onUnlock={() => setUnlocked(true)} />;
 
   const filtered = sorted.filter((ep) => {
     const q = search.toLowerCase();

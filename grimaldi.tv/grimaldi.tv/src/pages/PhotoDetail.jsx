@@ -1,21 +1,42 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { ArrowLeft, Share2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PhotoComments from '@/components/funny/PhotoComments';
+import EmailGate from '@/components/episodes/EmailGate';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function PhotoDetail() {
   const { id } = useParams();
+  const { isAuthenticated } = useAuth();
+  const [unlocked, setUnlocked] = useState(() => !!localStorage.getItem('dgp_subscriber_email'));
+  const isUnlocked = isAuthenticated || unlocked;
 
-  const { data: photo, isLoading } = useQuery({
+  const { data: photos = [], isLoading: loadingPhotos } = useQuery({
+    queryKey: ['funny-photos'],
+    queryFn: () => base44.entities.FunnyPhoto.list('-created_date', 100),
+  });
+
+  const photoIndex = photos.findIndex((p) => String(p.id) === String(id));
+
+  const { data: singlePhoto, isLoading: loadingSingle } = useQuery({
     queryKey: ['funny-photo', id],
     queryFn: async () => {
       const { data, error } = await supabase.from('funny_photos').select('*').eq('id', id).single();
       if (error) throw error;
       return data;
     },
+    enabled: photoIndex === -1,
   });
+
+  const photo = photoIndex !== -1 ? photos[photoIndex] : singlePhoto;
+  const isLoading = loadingPhotos && loadingSingle;
+
+  const isFreePhoto = photoIndex !== -1 && photoIndex < 3;
+  const canAccess = isUnlocked || isFreePhoto;
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -40,6 +61,37 @@ export default function PhotoDetail() {
       <div className="min-h-screen py-24 px-6 text-center">
         <p className="text-muted-foreground text-lg mb-4">Photo not found.</p>
         <Link to="/FunnyPhotos" className="text-primary hover:underline">Back to Photo Gallery</Link>
+      </div>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen py-24 px-6 relative">
+        <div
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+          style={{ backgroundImage: "url('/main-banner.jpg')" }}
+        />
+        <div className="fixed inset-0 bg-background/70 backdrop-blur-md -z-10" />
+
+        <div className="max-w-xl mx-auto">
+          <Link to="/FunnyPhotos" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to Photo Gallery
+          </Link>
+
+          <div className="bg-card border border-border rounded-2xl p-6 mb-8 text-center">
+            {photo.title && <h1 className="font-bold text-foreground text-lg mb-2">{photo.title}</h1>}
+            <p className="text-muted-foreground text-sm">Sign in or enter your email to view this photo and comments.</p>
+          </div>
+
+          <EmailGate
+            onUnlock={() => setUnlocked(true)}
+            title="Sign in or enter email to view photo"
+            description="This photo is reserved for signed-in members or subscribers. Enter your email below or sign in to unlock."
+            buttonText="Unlock Photo →"
+            icon={Lock}
+          />
+        </div>
       </div>
     );
   }
@@ -74,3 +126,4 @@ export default function PhotoDetail() {
     </div>
   );
 }
+
