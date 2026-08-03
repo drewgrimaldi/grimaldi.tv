@@ -3696,10 +3696,43 @@ function getCookie(request, name) {
 __name(getCookie, "getCookie");
 __name2(getCookie, "getCookie");
 async function getSession(request, env) {
-  if (!env.SESSION_SECRET) return null;
-  const token = getCookie(request, SESSION_COOKIE_NAME);
-  if (!token) return null;
-  return await verifySessionToken(token, env);
+  // 1. Check direct session token cookie (sam_session)
+  if (env.SESSION_SECRET) {
+    const token = getCookie(request, SESSION_COOKIE_NAME);
+    if (token) {
+      const verified = await verifySessionToken(token, env);
+      if (verified) return verified;
+    }
+  }
+
+  // 2. Check URL query parameters for cross-subdomain link token (?auth=... or ?subscriber=...)
+  try {
+    const reqUrl = new URL(request.url);
+    const urlAuth = reqUrl.searchParams.get("auth") || reqUrl.searchParams.get("subscriber");
+    if (urlAuth) {
+      const bettor = await findBettorByUsername(env, urlAuth.trim());
+      if (bettor) {
+        return { username: bettor.username || bettor.email || urlAuth.trim(), bettorRecordId: bettor.id };
+      }
+      return { username: urlAuth.trim(), bettorRecordId: null };
+    }
+  } catch(e) {}
+
+  // 3. Single Sign-On (SSO) fallback for shared .grimaldi.tv subscriber cookies
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const subCookie = getCookie(request, "grimaldi_sub") || getCookie(request, "dgp_subscriber_email");
+  const hasVipAccess = cookieHeader.includes("samPremiumAccess=yes") || cookieHeader.includes("samResponsibleUseAccepted=yes");
+
+  if (subCookie || hasVipAccess) {
+    const targetUser = (subCookie || "Subscriber").trim();
+    const bettor = await findBettorByUsername(env, targetUser);
+    if (bettor) {
+      return { username: bettor.username || bettor.email || targetUser, bettorRecordId: bettor.id };
+    }
+    return { username: targetUser, bettorRecordId: null };
+  }
+
+  return null;
 }
 __name(getSession, "getSession");
 __name2(getSession, "getSession");
