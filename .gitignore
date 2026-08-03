@@ -31,3 +31,7 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Root standalone worker backups
+/*.js
+
