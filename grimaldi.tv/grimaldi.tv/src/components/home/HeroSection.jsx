@@ -9,7 +9,7 @@ export default function HeroSection() {
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')", filter: "blur(0px)" }}
+        style={{ backgroundImage: "url('/main-banner.jpg')", filter: "blur(12px)" }}
       />
       <div className="absolute inset-0 bg-background/60 backdrop-blur-md" />
       <div className="relative max-w-7xl mx-auto px-6 py-24 w-full flex flex-col items-center">
@@ -25,11 +25,11 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.1 }} className="mb-0 flex justify-center">
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.1 }} className="mb-6 flex justify-center">
             <img
-              src="https://media.base44.com/images/public/69b6b824807a75fd2d45c448/a600305f2_C127E994-6269-48A4-9A89-4C004C12DB60.png"
-              alt="The Drew Grimaldi Podcast Logo"
-              className="w-[28rem] h-[28rem] sm:w-[33.6rem] sm:h-[33.6rem] object-contain drop-shadow-2xl"
+              src="/main-banner.jpg"
+              alt="The Drew Grimaldi Podcast Banner"
+              className="w-full max-w-3xl h-auto object-contain drop-shadow-2xl rounded-2xl border border-border/20"
             />
           </motion.div>
 

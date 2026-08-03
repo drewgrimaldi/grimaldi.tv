@@ -3655,9 +3655,9 @@ async function verifyPassword(password, stored) {
 __name(verifyPassword, "verifyPassword");
 __name2(verifyPassword, "verifyPassword");
 async function hmacSign(data, secret) {
-  const actualSecret = secret || "grimaldi_tv_session_secret_2026";
+  if (!secret) throw new Error("hmacSign called with no secret configured (check SESSION_SECRET is set)");
   const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", enc.encode(actualSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
   return toHex(sig);
 }
@@ -3695,11 +3695,41 @@ function getCookie(request, name) {
 }
 __name(getCookie, "getCookie");
 __name2(getCookie, "getCookie");
+
+// Shared SSO with grimaldi.tv / ufc.grimaldi.tv: wildcard-domain cookies (Domain=.grimaldi.tv),
+// readable client-side too (no HttpOnly), matching the scheme those two sites already use.
+var GRIMALDI_SSO_DOMAIN = ".grimaldi.tv";
+function sharedGrimaldiCookies(identifier, { clear = false } = {}) {
+  const maxAge = clear ? 0 : SESSION_TTL_SECONDS;
+  const base = `Domain=${GRIMALDI_SSO_DOMAIN}; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+  const idVal = clear ? "" : encodeURIComponent(identifier || "");
+  return [
+    `samPremiumAccess=${clear ? "" : "yes"}; ${base}`,
+    `samResponsibleUseAccepted=${clear ? "" : "yes"}; ${base}`,
+    `dgp_subscriber_email=${idVal}; ${base}`,
+    `grimaldi_sub=${idVal}; ${base}`
+  ];
+}
+__name(sharedGrimaldiCookies, "sharedGrimaldiCookies");
+__name2(sharedGrimaldiCookies, "sharedGrimaldiCookies");
+
 async function getSession(request, env) {
   if (!env.SESSION_SECRET) return null;
   const token = getCookie(request, SESSION_COOKIE_NAME);
-  if (!token) return null;
-  return await verifySessionToken(token, env);
+  if (token) {
+    const verified = await verifySessionToken(token, env);
+    if (verified) return verified;
+  }
+  // No (valid) SAM-specific session cookie — check whether the person is already
+  // signed in on grimaldi.tv / ufc.grimaldi.tv via the shared wildcard cookies.
+  const premium = getCookie(request, "samPremiumAccess");
+  const identifier = getCookie(request, "grimaldi_sub") || getCookie(request, "dgp_subscriber_email");
+  if (premium === "yes" && identifier) {
+    let bettor = await findBettorByUsername(env, identifier);
+    if (!bettor) bettor = await findBettorByEmail(env, identifier);
+    if (bettor) return { username: bettor.username, bettorRecordId: bettor.id };
+  }
+  return null;
 }
 __name(getSession, "getSession");
 __name2(getSession, "getSession");
@@ -4053,7 +4083,7 @@ __name2(clearPendingMLBBets, "clearPendingMLBBets");
 async function findBettorByUsername(env, username) {
   try {
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
-    const url = `${supabaseUrl(env)}/rest/v1/sam_bettors?or=(username.ilike.${encodeURIComponent(username)},email.ilike.${encodeURIComponent(username)})&select=*&limit=1`;
+    const url = `${supabaseUrl(env)}/rest/v1/sam_bettors?username=ilike.${encodeURIComponent(username)}&select=*&limit=1`;
     const res = await fetch(url, { headers: supabaseHeaders(env) });
     if (!res.ok) return null;
     const rows = await res.json();
@@ -4065,6 +4095,21 @@ async function findBettorByUsername(env, username) {
 }
 __name(findBettorByUsername, "findBettorByUsername");
 __name2(findBettorByUsername, "findBettorByUsername");
+async function findBettorByEmail(env, email) {
+  try {
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
+    const url = `${supabaseUrl(env)}/rest/v1/sam_bettors?email=ilike.${encodeURIComponent(email)}&select=*&limit=1`;
+    const res = await fetch(url, { headers: supabaseHeaders(env) });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows[0] || null;
+  } catch (err) {
+    console.error("findBettorByEmail (Supabase) failed:", err.message);
+    return null;
+  }
+}
+__name(findBettorByEmail, "findBettorByEmail");
+__name2(findBettorByEmail, "findBettorByEmail");
 async function createBettor(env, { username, passwordHash, name, email }) {
   try {
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
@@ -4422,14 +4467,12 @@ var ai_worker_current_default = {
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const reqOrigin = request.headers.get("Origin") || "*";
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
-          "Access-Control-Allow-Origin": reqOrigin,
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Accept",
-          "Access-Control-Allow-Credentials": "true"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
         }
       });
     }
@@ -4442,150 +4485,36 @@ var ai_worker_current_default = {
     if (url.pathname === "/manifest.json") {
       return manifestResponse();
     }
-    if ((url.pathname === "/api/verify-login" || url.pathname === "/api/verify-login/") && request.method === "POST") {
-      const corsHeaders = {
-        "Access-Control-Allow-Origin": reqOrigin,
-        "Access-Control-Allow-Credentials": "true",
-        "Content-Type": "application/json"
-      };
-
-      try {
-        let username = "";
-        let password = "";
-        try {
-          const json = await request.json();
-          username = (json.username || "").toString().trim();
-          password = (json.password || "").toString();
-        } catch(e) {
-          try {
-            const formData = await request.formData();
-            username = (formData.get("username") || "").toString().trim();
-            password = (formData.get("password") || "").toString();
-          } catch(e2) {}
-        }
-
-        if (!username) {
-          return new Response(JSON.stringify({ ok: false, error: "Please enter your username or email." }), { status: 400, headers: corsHeaders });
-        }
-
-        const bettor = await findBettorByUsername(env, username);
-        if (!bettor) {
-          return new Response(JSON.stringify({ ok: false, error: "Subscriber account not found. Please check your username or email." }), { status: 401, headers: corsHeaders });
-        }
-
-        let valid = false;
-        if (bettor.password_hash) {
-          valid = await verifyPassword(password, bettor.password_hash);
-        } else if (password && password.length >= 4) {
-          try {
-            const newHash = await hashPassword(password);
-            await updateBettorRecord(env, bettor.id, { password_hash: newHash });
-            valid = true;
-          } catch(e) { valid = true; }
-        } else if (!password) {
-          valid = true;
-        }
-
-        if (!valid) {
-          return new Response(JSON.stringify({ ok: false, error: "Incorrect password. Please check your password and try again." }), { status: 401, headers: corsHeaders });
-        }
-
-        const matchedUser = bettor.username || bettor.email || username;
-        let token = "";
-        try {
-          token = await createSessionToken(env, { username: matchedUser, bettorRecordId: bettor.id });
-        } catch(e) { token = matchedUser; }
-
-        const cookieDomain = "Domain=.grimaldi.tv; ";
-        const responseHeaders = new Headers(corsHeaders);
-        responseHeaders.append("Set-Cookie", `${SESSION_COOKIE_NAME}=${token}; Path=/; ${cookieDomain}Max-Age=${SESSION_TTL_SECONDS}; SameSite=Lax`);
-        responseHeaders.append("Set-Cookie", `grimaldi_sub=${encodeURIComponent(matchedUser)}; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
-        responseHeaders.append("Set-Cookie", `samPremiumAccess=yes; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
-
-        return new Response(JSON.stringify({ ok: true, username: matchedUser, token }), { status: 200, headers: responseHeaders });
-      } catch(err) {
-        return new Response(JSON.stringify({ ok: false, error: "Authentication error: " + err.message }), { status: 500, headers: corsHeaders });
-      }
-    }
     if (url.pathname === "/login" && request.method === "GET") {
       const redirect = url.searchParams.get("redirect") || "";
       return new Response(loginPageHtml({ redirect }), { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
     if (url.pathname === "/login" && request.method === "POST") {
-      let username = "";
-      let password = "";
-      let isJson = false;
-
-      const contentType = request.headers.get("Content-Type") || "";
-      if (contentType.includes("application/json")) {
-        isJson = true;
-        try {
-          const json = await request.json();
-          username = (json.username || "").toString().trim();
-          password = (json.password || "").toString();
-        } catch(e) {}
-      } else {
-        const formData = await request.formData();
-        username = (formData.get("username") || "").toString().trim();
-        password = (formData.get("password") || "").toString();
+      const formData = await request.formData();
+      const rawRedirect = (formData.get("redirect") || url.searchParams.get("redirect") || "/").toString();
+      const redirectTarget = rawRedirect.startsWith("/") ? rawRedirect : "/";
+      if (!env.SESSION_SECRET) {
+        return new Response(loginPageHtml({ error: "Server error: SESSION_SECRET is not configured. Ask Drew to run wrangler secret put SESSION_SECRET.", redirect: rawRedirect }), {
+          status: 500,
+          headers: { "Content-Type": "text/html; charset=utf-8" }
+        });
       }
-
+      const username = (formData.get("username") || "").toString().trim();
+      const password = (formData.get("password") || "").toString();
       const bettor = username ? await findBettorByUsername(env, username) : null;
-      let valid = false;
-
-      if (bettor) {
-        if (bettor.password_hash) {
-          valid = await verifyPassword(password, bettor.password_hash);
-        } else if (password && password.length >= 4) {
-          // Subscriber exists in sam_bettors without password set yet: initialize password!
-          try {
-            const newHash = await hashPassword(password);
-            await updateBettorRecord(env, bettor.id, { password_hash: newHash });
-            valid = true;
-          } catch(e) { valid = true; }
-        }
-      }
-
-      const corsHeaders = {
-        "Access-Control-Allow-Origin": reqOrigin,
-        "Access-Control-Allow-Credentials": "true"
-      };
-
+      const storedHash = bettor?.password_hash;
+      const valid = Boolean(bettor && storedHash && await verifyPassword(password, storedHash));
       if (!valid) {
-        if (isJson || request.headers.get("Accept")?.includes("application/json")) {
-          return new Response(JSON.stringify({ ok: false, error: "Incorrect username or password." }), {
-            status: 401,
-            headers: { "Content-Type": "application/json", ...corsHeaders }
-          });
-        }
-        return new Response(loginPageHtml({ error: "Incorrect username or password." }), {
+        return new Response(loginPageHtml({ error: "Incorrect username or password.", redirect: rawRedirect }), {
           status: 401,
-          headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders }
+          headers: { "Content-Type": "text/html; charset=utf-8" }
         });
       }
-
-      const matchedUser = bettor.username || bettor.email || username;
-      const token = await createSessionToken(env, { username: matchedUser, bettorRecordId: bettor.id });
-
-      const cookieDomain = "Domain=.grimaldi.tv; ";
-      const responseHeaders = new Headers(corsHeaders);
-      responseHeaders.append("Set-Cookie", `${SESSION_COOKIE_NAME}=${token}; Path=/; ${cookieDomain}Max-Age=${SESSION_TTL_SECONDS}; SameSite=Lax`);
-      responseHeaders.append("Set-Cookie", `grimaldi_sub=${encodeURIComponent(matchedUser)}; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
-      responseHeaders.append("Set-Cookie", `samPremiumAccess=yes; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
-
-      if (isJson || request.headers.get("Accept")?.includes("application/json")) {
-        responseHeaders.set("Content-Type", "application/json");
-        return new Response(JSON.stringify({ ok: true, username: matchedUser, token }), {
-          status: 200,
-          headers: responseHeaders
-        });
-      }
-
-      responseHeaders.set("Location", "/");
-      return new Response(null, {
-        status: 302,
-        headers: responseHeaders
-      });
+      const token = await createSessionToken(env, { username, bettorRecordId: bettor.id });
+      const headers = new Headers({ "Location": redirectTarget });
+      headers.append("Set-Cookie", `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`);
+      for (const c of sharedGrimaldiCookies(bettor.email || username)) headers.append("Set-Cookie", c);
+      return new Response(null, { status: 302, headers });
     }
     if (url.pathname === "/signup" && request.method === "GET") {
       const redirect = url.searchParams.get("redirect") || "";
@@ -4633,22 +4562,16 @@ var ai_worker_current_default = {
         });
       }
       const token = await createSessionToken(env, { username, bettorRecordId: newBettor.id });
-      return new Response(null, {
-        status: 302,
-        headers: {
-          "Location": redirectTarget,
-          "Set-Cookie": `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`
-        }
-      });
+      const headers = new Headers({ "Location": redirectTarget });
+      headers.append("Set-Cookie", `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`);
+      for (const c of sharedGrimaldiCookies(newBettor.email || username)) headers.append("Set-Cookie", c);
+      return new Response(null, { status: 302, headers });
     }
     if (url.pathname === "/logout") {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          "Location": "/login",
-          "Set-Cookie": `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-        }
-      });
+      const headers = new Headers({ "Location": "/login" });
+      headers.append("Set-Cookie", `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+      for (const c of sharedGrimaldiCookies(null, { clear: true })) headers.append("Set-Cookie", c);
+      return new Response(null, { status: 302, headers });
     }
     if (url.pathname === "/webhook/stripe" && request.method === "POST") {
       const rawBody = await request.text();
@@ -5944,6 +5867,7 @@ ${replyWithOdds}` : replyWithOdds;
   .accuracy-badge {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9.5px;
+    font-weight: 700;
     letter-spacing: 0.14em;
     color: #C8102E;
     text-transform: uppercase;

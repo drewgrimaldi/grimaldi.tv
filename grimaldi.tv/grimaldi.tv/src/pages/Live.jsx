@@ -27,7 +27,7 @@ export default function Live() {
 
   return (
     <div className="min-h-screen py-24 px-6 relative">
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')" }} />
+      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('/main-banner.jpg')" }} />
       <div className="fixed inset-0 bg-background/60 backdrop-blur-md -z-10" />
       <div className="max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>

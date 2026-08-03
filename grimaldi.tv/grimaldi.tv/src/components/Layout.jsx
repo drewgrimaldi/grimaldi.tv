@@ -9,7 +9,7 @@ const navLinks = [
   { label: 'Episodes', path: '/Episodes' },
   { label: 'Photo Gallery', path: '/FunnyPhotos' },
   { label: 'Blog', path: '/Blog' },
-  { label: 'Sportsbook', path: 'https://ai.grimaldi.tv', isExternal: true },
+  { label: 'Sports Analysis', path: 'https://ai.grimaldi.tv', isExternal: true },
   { label: 'Podcast Merchandise', path: '/Store' },
   { label: 'Press & Upcoming Guests', path: '/PressEvents' },
 ];
@@ -33,7 +33,7 @@ export default function Layout() {
     <div className="min-h-screen bg-[rgba(25,25,200,1)] flex flex-col relative overflow-x-hidden">
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20 pointer-events-none"
-        style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')" }}
+        style={{ backgroundImage: "url('/main-banner.jpg')" }}
       />
       <div className="fixed inset-0 bg-black/50 backdrop-blur-md -z-20 pointer-events-none" />
 

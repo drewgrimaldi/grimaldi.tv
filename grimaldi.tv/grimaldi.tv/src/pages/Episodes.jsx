@@ -39,7 +39,7 @@ export default function Episodes() {
 
   return (
     <div className="min-h-screen py-8 px-6 relative">
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')" }} />
+      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('/main-banner.jpg')" }} />
       <div className="fixed inset-0 bg-background/60 backdrop-blur-md -z-10" />
       <div className="max-w-7xl mx-auto">
         <div className="mb-4 bg-red-600/20 border border-red-600/40 rounded-2xl p-2 flex flex-col items-center gap-1.5">

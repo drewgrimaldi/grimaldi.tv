@@ -48,7 +48,7 @@ export default function PhotoDetail() {
     <div className="min-h-screen py-24 px-6 relative">
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
-        style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')" }}
+        style={{ backgroundImage: "url('/main-banner.jpg')" }}
       />
       <div className="fixed inset-0 bg-background/70 backdrop-blur-md -z-10" />
 

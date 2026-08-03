@@ -32,7 +32,7 @@ export default function EmailGate({ onUnlock }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-24 relative">
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('https://media.base44.com/images/public/69b6b824807a75fd2d45c448/0f43c768b_IMG_4167.jpg')" }} />
+      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10" style={{ backgroundImage: "url('/main-banner.jpg')" }} />
       <div className="fixed inset-0 bg-background/60 backdrop-blur-md -z-10" />
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-md bg-card border border-border/50 rounded-2xl p-10 text-center">
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6"><Headphones className="w-7 h-7 text-primary" /></div>

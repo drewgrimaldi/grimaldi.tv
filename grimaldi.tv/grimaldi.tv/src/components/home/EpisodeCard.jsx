@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Calendar, ExternalLink, X, Play } from 'lucide-react';
 import { format } from 'date-fns';
@@ -17,17 +17,46 @@ function getCloudflareEmbedUrl(url) {
 }
 function getRumbleId(url) {
   if (!url) return null;
-  const match = url.match(/rumble\.com\/(v[a-zA-Z0-9]+)/i);
+  const match = url.match(/\/embed\/(v[a-zA-Z0-9]+)/i);
   return match ? match[1] : null;
 }
 
 export default function EpisodeCard({ episode, index = 0 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [rumbleEmbedId, setRumbleEmbedId] = useState(null);
+  const [loadingRumble, setLoadingRumble] = useState(false);
+
   const youtubeId = getYouTubeId(episode.youtube_url);
   const cloudflareEmbed = getCloudflareEmbedUrl(episode.cloudflare_url);
-  const rumbleId = getRumbleId(episode.rumble_url);
 
-  const hasVideo = !!(youtubeId || cloudflareEmbed || rumbleId);
+  useEffect(() => {
+    if (modalOpen && episode.rumble_url) {
+      const syncId = getRumbleId(episode.rumble_url);
+      if (syncId) {
+        setRumbleEmbedId(syncId);
+      } else {
+        setLoadingRumble(true);
+        fetch(`/api/rumble-embed?url=${encodeURIComponent(episode.rumble_url)}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to resolve Rumble embed');
+            return res.json();
+          })
+          .then(data => {
+            if (data.embedId) {
+              setRumbleEmbedId(data.embedId);
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching Rumble embed ID:', err);
+          })
+          .finally(() => {
+            setLoadingRumble(false);
+          });
+      }
+    }
+  }, [modalOpen, episode.rumble_url]);
+
+  const hasVideo = !!(youtubeId || cloudflareEmbed || episode.rumble_url);
   const thumbnail = youtubeId
     ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
     : episode.cover_image_url || null;
@@ -98,8 +127,22 @@ export default function EpisodeCard({ episode, index = 0 }) {
               </button>
 
               {hasVideo && (
-                <div className="aspect-video bg-black">
-                  {youtubeId ? (
+                <div className="aspect-video bg-black relative">
+                  {loadingRumble ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  ) : rumbleEmbedId ? (
+                    <iframe
+                      src={`https://rumble.com/embed/${rumbleEmbedId}`}
+                      title={episode.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  ) : youtubeId ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
                       title={episode.title}
@@ -117,16 +160,6 @@ export default function EpisodeCard({ episode, index = 0 }) {
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="w-full h-full"
-                    />
-                  ) : rumbleId ? (
-                    <iframe
-                      src={`https://rumble.com/embed/${rumbleId}`}
-                      title={episode.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      className="w-full h-full"
-                      style={{ border: 'none' }}
                     />
                   ) : null}
                 </div>
@@ -151,8 +184,8 @@ export default function EpisodeCard({ episode, index = 0 }) {
                 {episode.description && <p className="text-sm text-muted-foreground leading-relaxed">{episode.description}</p>}
                 {(episode.rumble_url || episode.youtube_url || episode.spotify_url || episode.apple_url) && (
                   <div className="flex flex-wrap gap-3 pt-1">
-                    {episode.youtube_url && <a href={episode.youtube_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-semibold transition-colors">Watch on YouTube <ExternalLink className="w-3.5 h-3.5" /></a>}
                     {episode.rumble_url && <a href={episode.rumble_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-semibold transition-colors">Watch on Rumble <ExternalLink className="w-3.5 h-3.5" /></a>}
+                    {episode.youtube_url && <a href={episode.youtube_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-semibold transition-colors">Watch on YouTube <ExternalLink className="w-3.5 h-3.5" /></a>}
                     {episode.spotify_url && <a href={episode.spotify_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-semibold transition-colors">Listen on Spotify <ExternalLink className="w-3.5 h-3.5" /></a>}
                     {episode.apple_url && <a href={episode.apple_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-semibold transition-colors">Listen on Apple Podcasts <ExternalLink className="w-3.5 h-3.5" /></a>}
                   </div>
