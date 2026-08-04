@@ -104,9 +104,13 @@ window.saveSubscriberToSamBettors = async function(email, name) {
 
 window.isGrimaldiVip = function() {
   try {
-    const isAcceptedLocally = localStorage.getItem('samPremiumAccess') === 'yes' || localStorage.getItem('samResponsibleUseAccepted') === 'yes';
-    const isAcceptedCookie = document.cookie.includes('samPremiumAccess=yes') || document.cookie.includes('samResponsibleUseAccepted=yes');
-    return isAcceptedLocally || isAcceptedCookie;
+    const email = localStorage.getItem("dgp_subscriber_email") || 
+                  localStorage.getItem("grimaldi_subscriber") || 
+                  localStorage.getItem("patriot_subscriber") || 
+                  localStorage.getItem("samPremiumAccess");
+    const cookieStr = document.cookie || "";
+    const hasCookie = cookieStr.includes("grimaldi_sub=") || cookieStr.includes("samPremiumAccess");
+    return !!(email || hasCookie);
   } catch (err) {
     return false;
   }
