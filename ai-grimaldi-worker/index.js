@@ -4666,21 +4666,29 @@ var ai_worker_current_default = {
         });
       }
       const token = await createSessionToken(env, { username, bettorRecordId: newBettor.id });
+      const cookieDomain = "Domain=.grimaldi.tv; ";
+      const responseHeaders = new Headers();
+      responseHeaders.set("Location", redirectTarget);
+      responseHeaders.append("Set-Cookie", `${SESSION_COOKIE_NAME}=${token}; Path=/; ${cookieDomain}Max-Age=${SESSION_TTL_SECONDS}; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `grimaldi_sub=${encodeURIComponent(username)}; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `samPremiumAccess=yes; Path=/; ${cookieDomain}Max-Age=31536000; SameSite=Lax`);
       return new Response(null, {
         status: 302,
-        headers: {
-          "Location": redirectTarget,
-          "Set-Cookie": `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`
-        }
+        headers: responseHeaders
       });
     }
     if (url.pathname === "/logout") {
+      const cookieDomain = "Domain=.grimaldi.tv; ";
+      const responseHeaders = new Headers();
+      responseHeaders.set("Location", "/login");
+      responseHeaders.append("Set-Cookie", `${SESSION_COOKIE_NAME}=; Path=/; ${cookieDomain}Max-Age=0; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `grimaldi_sub=; Path=/; ${cookieDomain}Max-Age=0; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `samPremiumAccess=; Path=/; ${cookieDomain}Max-Age=0; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `dgp_subscriber_email=; Path=/; ${cookieDomain}Max-Age=0; SameSite=Lax`);
+      responseHeaders.append("Set-Cookie", `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`);
       return new Response(null, {
         status: 302,
-        headers: {
-          "Location": "/login",
-          "Set-Cookie": `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-        }
+        headers: responseHeaders
       });
     }
     if (url.pathname === "/webhook/stripe" && request.method === "POST") {
