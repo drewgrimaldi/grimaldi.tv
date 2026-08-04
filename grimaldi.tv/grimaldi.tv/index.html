@@ -248,10 +248,13 @@
         window.history.replaceState({path: cleanUrl}, '', cleanUrl);
       }
 
-      // 2. Check root domain cookie
-      const cookieUser = getRootCookie();
-      if (cookieUser) {
-        syncAllAuthKeys(cookieUser);
+      // 2. Check root domain cookie and local subscriber state on startup
+      const activeUser = localStorage.getItem('dgp_subscriber_email') || 
+                         localStorage.getItem('grimaldi_subscriber') || 
+                         localStorage.getItem('patriot_subscriber') || 
+                         getRootCookie();
+      if (activeUser) {
+        syncAllAuthKeys(activeUser);
       }
 
       // Get current active user
