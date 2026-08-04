@@ -31,16 +31,16 @@ body, html { background-color: #050505 !important; }
 .bg-secondary/70 { background-color: rgba(17,17,17,0.7) !important; }
 .bg-muted { background-color: #111 !important; }
 
-/* Maroon red glow on all cards */
+/* Clean dark border on all cards without any red glow */
 .rounded-lg.border, .rounded-xl.border, .rounded-2xl.border,
 .rounded-lg.bg-card, .rounded-xl.bg-card {
   background-color: #090909 !important;
-  border-color: rgba(165,29,36,0.2) !important;
-  box-shadow: 0 0 20px rgba(165,29,36,0.15), 0 4px 12px rgba(0,0,0,0.8) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.85) !important;
   transition: box-shadow 0.25s ease, border-color 0.25s ease !important;
 }
 .rounded-lg.border:hover, .rounded-xl.border:hover, .rounded-2xl.border:hover,
 .rounded-lg.bg-card:hover, .rounded-xl.bg-card:hover {
-  border-color: rgba(165,29,36,0.45) !important;
-  box-shadow: 0 0 32px rgba(165,29,36,0.32), 0 6px 20px rgba(0,0,0,0.9) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.95) !important;
 }
