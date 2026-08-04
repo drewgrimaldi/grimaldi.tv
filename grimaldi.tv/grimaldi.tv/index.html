@@ -258,6 +258,10 @@
                getValidUserString(getRootCookie());
       }
 
+      window.isGrimaldiVip = function() {
+        return !!getActiveUser();
+      };
+
       // 1. Check URL parameters for cross-domain auth
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('subscriber') || urlParams.get('auth');

@@ -104,10 +104,16 @@ window.saveSubscriberToSamBettors = async function(email, name) {
 
 window.isGrimaldiVip = function() {
   try {
-    const e1 = localStorage.getItem("dgp_subscriber_email");
-    const e2 = localStorage.getItem("grimaldi_subscriber");
-    const user = (e1 && e1 !== "true" && e1 !== "false") ? e1 : ((e2 && e2 !== "true" && e2 !== "false") ? e2 : null);
-    return !!user;
+    const valid = function(v) {
+      if (!v || typeof v !== 'string') return null;
+      const c = v.trim();
+      return (c === '' || c === 'true' || c === 'false' || c === 'null' || c === 'undefined') ? null : c;
+    };
+    const e1 = valid(localStorage.getItem("dgp_subscriber_email"));
+    const e2 = valid(localStorage.getItem("grimaldi_subscriber"));
+    const cookieStr = document.cookie || "";
+    const hasCookie = cookieStr.includes("grimaldi_sub=");
+    return !!(e1 || e2 || hasCookie);
   } catch (err) {
     return false;
   }
