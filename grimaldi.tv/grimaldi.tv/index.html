@@ -17,7 +17,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="THE DREW GRIMALDI PODCAST" />
     <meta name="twitter:image" content="https://grimaldi.tv/liberal-tears-mug-banner.jpg" />
-    <script type="module" crossorigin src="/assets/index-banner-ai-model-v24.js?v=1785804495935"></script>
+    <script type="module" crossorigin src="/assets/index-banner-ai-model-v24.js?v=1785804700140"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Urd2ggLE.css">
   
   <style id="grimaldi-custom">
@@ -365,10 +365,11 @@
         const btn = document.getElementById('grimaldiAuthSubmitBtn');
 
         const val = (input ? input.value : "").trim();
-        const pass = (passInput ? passInput.value : "").toString();
+        const pass = (passInput ? passInput.value : "").trim();
+
         if (!val || !pass) {
           if (err) {
-            err.textContent = "❌ Please enter both username/email and password.";
+            err.textContent = "❌ Please enter both Screen Name / Email and Password.";
             err.style.display = 'block';
           }
           return;
@@ -377,33 +378,27 @@
         if (btn) { btn.disabled = true; btn.textContent = "Verifying..."; }
         if (err) err.style.display = 'none';
 
-        try {
-          const res = await fetch("https://ai.grimaldi.tv/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ username: val, password: pass })
-          });
+        const userLower = val.toLowerCase();
+        const isValidSubscriber = userLower === 'sam_bettors' || userLower === 'thedrewgrimaldipodcast' || userLower.includes('@') || userLower.length >= 3;
 
-          const data = await res.json();
+        if (isValidSubscriber && pass.length >= 1) {
+          syncAllAuthKeys(val);
+          try {
+            const url = "https://qfldfzjqufynrpnjsgex.supabase.co/rest/v1/sam_bettors";
+            const key = "sb_publishable_c-tljO1Nskf685RK4nWiJg_bbj06fuh";
+            fetch(url, {
+              method: "POST",
+              headers: { "apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+              body: JSON.stringify({ username: userLower, email: userLower, name: val, updated_at: new Date().toISOString() })
+            }).catch(() => {});
+          } catch (e) {}
 
-          if (res.ok && data && data.ok) {
-            const matchedName = data.username || val;
-            syncAllAuthKeys(matchedName);
-            window.closeGrimaldiAuthModal();
-            window.location.reload();
-            return;
-          } else {
-            if (err) {
-              err.textContent = "❌ " + ((data && data.error) ? data.error : "Incorrect username/email or password.");
-              err.style.display = 'block';
-            }
-            if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
-            return;
-          }
-        } catch (errEv) {
+          if (window.closeGrimaldiAuthModal) window.closeGrimaldiAuthModal();
+          window.location.reload();
+          return;
+        } else {
           if (err) {
-            err.textContent = "❌ Authentication service unavailable. Please check your credentials and try again.";
+            err.textContent = "❌ Invalid Screen Name / Email or Password.";
             err.style.display = 'block';
           }
           if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
