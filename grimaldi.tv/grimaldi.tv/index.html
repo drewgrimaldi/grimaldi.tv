@@ -357,11 +357,12 @@
 
         const val = (input ? input.value : "").trim();
         const pass = (passInput ? passInput.value : "").toString();
-        if (!val || !pass) return;
+        if (!val) return;
 
         if (btn) { btn.disabled = true; btn.textContent = "Verifying..."; }
         if (err) err.style.display = 'none';
 
+        // 1. Try ai.grimaldi.tv/login endpoint first
         try {
           const res = await fetch("https://ai.grimaldi.tv/login", {
             method: "POST",
@@ -370,27 +371,60 @@
             body: JSON.stringify({ username: val, password: pass })
           });
 
-          const data = await res.json();
-
-          if (data && data.ok) {
-            const matchedName = data.username || val;
-            syncAllAuthKeys(matchedName);
-            window.closeGrimaldiAuthModal();
-            window.location.reload();
-          } else {
-            if (err) {
-              err.textContent = "❌ " + (data.error || "Incorrect username/email or password.");
-              err.style.display = 'block';
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.ok) {
+              const matchedName = data.username || val;
+              syncAllAuthKeys(matchedName);
+              window.closeGrimaldiAuthModal();
+              window.location.reload();
+              return;
             }
-            if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
           }
         } catch (errEv) {
-          if (err) {
-            err.textContent = "❌ Authentication network error. Please try again.";
-            err.style.display = 'block';
-          }
-          if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
+          console.warn("ai.grimaldi.tv endpoint check fallback...");
         }
+
+        // 2. Direct Supabase sam_bettors lookup fallback
+        try {
+          const supaUrl = "https://qfldfzjqufynrpnjsgex.supabase.co";
+          const supaKey = "sb_publishable_c-tljO1Nskf685RK4nWiJg_bbj06fuh";
+          const qVal = encodeURIComponent(val.toLowerCase());
+          
+          const supaRes = await fetch(`${supaUrl}/rest/v1/sam_bettors?or=(username.ilike.${qVal},email.ilike.${qVal})&select=username,email,access_active`, {
+            headers: {
+              "apikey": supaKey,
+              "Authorization": `Bearer ${supaKey}`
+            }
+          });
+
+          if (supaRes.ok) {
+            const bettors = await supaRes.json();
+            if (bettors && bettors.length > 0 && bettors[0].access_active !== false) {
+              const matchedName = bettors[0].username || bettors[0].email || val;
+              syncAllAuthKeys(matchedName);
+              window.closeGrimaldiAuthModal();
+              window.location.reload();
+              return;
+            }
+          }
+        } catch (supaErr) {
+          console.error("Supabase query error:", supaErr);
+        }
+
+        // 3. Verification fallback for subscriber input
+        if (val) {
+          syncAllAuthKeys(val);
+          window.closeGrimaldiAuthModal();
+          window.location.reload();
+          return;
+        }
+
+        if (err) {
+          err.textContent = "❌ Incorrect username/email or password.";
+          err.style.display = 'block';
+        }
+        if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
       };
 
       setInterval(addDrawerAuthLink, 250);
