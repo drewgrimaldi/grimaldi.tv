@@ -12,14 +12,381 @@
     <meta property="og:site_name" content="GRIMALDI.TV" />
     <meta property="og:title" content="THE DREW GRIMALDI PODCAST" />
     <meta property="og:description" content="Comedy, commentary, and conversation." />
-    <meta property="og:image" content="https://media.base44.com/images/public/69b6b824807a75fd2d45c448/a600305f2_C127E994-6269-48A4-9A89-4C004C12DB60.png" />
+    <meta property="og:image" content="https://grimaldi.tv/liberal-tears-mug-banner.jpg" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="THE DREW GRIMALDI PODCAST" />
-    <meta name="twitter:image" content="https://media.base44.com/images/public/69b6b824807a75fd2d45c448/a600305f2_C127E994-6269-48A4-9A89-4C004C12DB60.png" />
-  </head>
+    <meta name="twitter:image" content="https://grimaldi.tv/liberal-tears-mug-banner.jpg" />
+    <script type="module" crossorigin src="/assets/index-banner-ai-model-v24.js?v=1785716744959"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Urd2ggLE.css">
+  
+  <style id="grimaldi-custom">
+    /* Grit navigation links - maroon red, uppercase, bold */
+    .grit-nav-link, a.grit-nav-link {
+      font-family: 'Oswald', 'Anton', Impact, sans-serif !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.08em !important;
+      font-size: 16px !important;
+      color: #3b82f6 !important;
+      text-decoration: none !important;
+      transition: color 0.2s ease, text-shadow 0.2s ease !important;
+    }
+    .grit-nav-link:hover, a.grit-nav-link:hover,
+    .grit-nav-link.active-link, a.grit-nav-link.active-link {
+      color: #60a5fa !important;
+      text-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
+    }
+    body, html, #root { background-color: #000000 !important; background: #000000 !important; }
+    .bg-card, [class~="bg-card"] { background-color: #0a0a0a !important; }
+    .bg-background { background-color: #050505 !important; }
+    .bg-secondary { background-color: #111 !important; }
+
+    /* Force slide-out menu drawer above everything including promo banner */
+    aside.fixed { z-index: 10001 !important; }
+    div.fixed.inset-0.bg-black\/60 { z-index: 10000 !important; }
+
+    /* Centered navbar logo */
+    .nav-logo-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .nav-logo-center img {
+      height: 52px;
+      max-height: 52px;
+      width: auto;
+      max-width: 65vw;
+      object-fit: contain;
+      display: block;
+    }
+    @media (min-width: 640px) {
+      .nav-logo-center img {
+        height: 56px;
+        max-height: 56px;
+        max-width: 320px;
+      }
+    }
+
+    /* Force Extra Bold Button Typography */
+    .solid-blue-vip-btn, .ai-model-btn, a.solid-blue-vip-btn, a.ai-model-btn,
+    a.bg-red-600, button.bg-red-600, .bg-red-600 {
+      font-weight: 900 !important;
+      font-family: system-ui, -apple-system, sans-serif !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+    }
+
+    /* Solid Electric Blue VIP Button */
+    .solid-blue-vip-btn {
+      background-color: #2563eb !important;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6) !important;
+      color: #ffffff !important;
+      border: 2px solid #60a5fa !important;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6) !important;
+    }
+
+    /* Yellow AI Prediction Model Button */
+    .ai-model-btn {
+      background-color: #facc15 !important;
+      background: linear-gradient(135deg, #eab308, #facc15, #fef08a) !important;
+      color: #000000 !important;
+      border: 2px solid #fef08a !important;
+      box-shadow: 0 10px 30px rgba(234, 179, 8, 0.65) !important;
+      transition: all 0.3s ease !important;
+    }
+    .ai-model-btn:hover {
+      box-shadow: 0 12px 35px rgba(250, 204, 21, 0.9) !important;
+      transform: translateY(-2px) scale(1.03) !important;
+    }
+
+    /* Clean Dark Styling — Completely Remove Red Borders and Red Glow Outlines on Photos & Episodes */
+    .border-primary, [class*="border-[#a51d24]"], [class*="border-red"],
+    .rounded-lg.border, .rounded-xl.border, .rounded-2xl.border,
+    .bg-card, [class*="bg-card"], [class*="card"], img, iframe, article, .episode-card {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.85) !important;
+    }
+  
+    /* Add clean 20px vertical space above and below NEW EPISODES WEEKLY bubble */
+    .inline-flex.flex-col.items-center,
+    [class*="rounded-full"][class*="border-primary"] {
+      margin-top: 20px !important;
+      margin-bottom: 20px !important;
+    }
+
+  </style>
+</head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+    <a href="/Home" id="grimaldi-nav-logo" style="
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 52;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    ">
+      <img
+        src="/grimaldi-logo-flag.jpg"
+        alt="GRIMALDI.TV"
+        style="height:46px; width:auto; max-width:min(280px,58vw); object-fit:contain; display:block;"
+      >
+    </a>
+
+  <div id="static-promo-banner" style="position:fixed;top:64px;left:0;right:0;z-index:200;background:#dc2626;color:white;text-align:center;padding:8px 0;font-size:14px;font-weight:600;letter-spacing:0.02em;">
+    USE PROMO CODE: <strong>GRIM</strong> at <a href="https://mypillow.com/GRIM" target="_blank" style="color:white;text-decoration:underline;">MyPillow.com</a>
+  </div>
+
+  
+
+
+  
+
+
+  
+
+
+  <!-- SEAMLESS CROSS-SUBDOMAIN (.GRIMALDI.TV) AUTH SYNC -->
+  <div id="grimaldiAuthModal" style="position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:20px; font-family:system-ui, -apple-system, sans-serif;">
+    <div style="max-width:420px; width:100%; background:#121212; border:1px solid rgba(59,130,246,0.4); border-radius:24px; padding:28px 24px; color:white; box-shadow:0 12px 40px rgba(0,0,0,0.9); text-align:center; position:relative;">
+      <button onclick="window.closeGrimaldiAuthModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#a1a1aa; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+      
+      <div style="width:56px; height:56px; border-radius:50%; background:rgba(59,130,246,0.15); display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto; font-size:28px;">🔑</div>
+      <h3 style="font-size:22px; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px 0; color:#ffffff;">SUBSCRIBER SIGN-IN</h3>
+      <p style="color:#a1a1aa; font-size:13px; line-height:1.5; margin:0 0 20px 0;">Sign in with your registered <strong>Username</strong> or <strong>Email</strong> to unlock all Blog posts, Photo Galleries, and VIP Analysis across all Grimaldi TV sites.</p>
+
+      <form onsubmit="window.handleGrimaldiSignIn(event)" style="display:flex; flex-direction:column; gap:12px;">
+        <input type="text" id="grimaldiAuthInput" placeholder="Username or Email" required style="width:100%; padding:14px 16px; background:#1c1c1e; border:1px solid #333; border-radius:12px; color:white; font-size:14px; outline:none; box-sizing:border-box;" />
+        <input type="password" id="grimaldiAuthPassword" placeholder="Password" required style="width:100%; padding:14px 16px; background:#1c1c1e; border:1px solid #333; border-radius:12px; color:white; font-size:14px; outline:none; box-sizing:border-box;" />
+        <div id="grimaldiAuthError" style="display:none; color:#ef4444; font-size:12px; text-align:left; line-height:1.4;"></div>
+
+        <button type="submit" id="grimaldiAuthSubmitBtn" style="width:100%; padding:14px; background:linear-gradient(135deg, #2563eb, #3b82f6); color:white; font-weight:900; font-size:14px; border:none; border-radius:30px; cursor:pointer; text-transform:uppercase; letter-spacing:0.04em; box-shadow:0 6px 20px rgba(37,99,235,0.4);">
+          Sign In & Unlock All
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const DOMAIN_COOKIE = "grimaldi_sub";
+
+      // Define global window.isGrimaldiVip helper for blog & photo paywall unlock
+      window.isGrimaldiVip = function() {
+        try {
+          const email = localStorage.getItem('dgp_subscriber_email') || 
+                        localStorage.getItem('grimaldi_subscriber') || 
+                        localStorage.getItem('patriot_subscriber') || 
+                        localStorage.getItem('samPremiumAccess');
+          const cookieStr = document.cookie || '';
+          const hasCookie = cookieStr.includes('grimaldi_sub=') || cookieStr.includes('samPremiumAccess');
+          return !!(email || hasCookie);
+        } catch(e) {
+          return false;
+        }
+      };
+
+      // Read root domain cookie
+      function getRootCookie() {
+        const nameEQ = DOMAIN_COOKIE + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i].trim();
+          if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+        }
+        return null;
+      }
+
+      // Set root domain cookie (.grimaldi.tv)
+      function setRootCookie(usernameOrEmail) {
+        if (!usernameOrEmail) return;
+        const expires = "Max-Age=31536000; "; // 1 year
+        const domainStr = window.location.hostname.includes('grimaldi.tv') ? "Domain=.grimaldi.tv; " : "";
+        document.cookie = DOMAIN_COOKIE + "=" + encodeURIComponent(usernameOrEmail) + "; " + expires + domainStr + "Path=/; SameSite=Lax";
+      }
+
+      // Clear root domain cookie
+      function clearRootCookie() {
+        const domainStr = window.location.hostname.includes('grimaldi.tv') ? "Domain=.grimaldi.tv; " : "";
+        document.cookie = DOMAIN_COOKIE + "=; Max-Age=0; " + domainStr + "Path=/;";
+      }
+
+      // Sync all localStorage keys
+      function syncAllAuthKeys(usernameOrEmail) {
+        if (!usernameOrEmail) return;
+        localStorage.setItem('dgp_subscriber_email', usernameOrEmail);
+        localStorage.setItem('samPremiumAccess', 'true');
+        localStorage.setItem('grimaldi_subscriber', usernameOrEmail);
+        localStorage.setItem('patriot_subscriber', 'true');
+        setRootCookie(usernameOrEmail);
+      }
+
+      function clearAllAuthKeys() {
+        localStorage.removeItem('dgp_subscriber_email');
+        localStorage.removeItem('samPremiumAccess');
+        localStorage.removeItem('grimaldi_subscriber');
+        localStorage.removeItem('patriot_subscriber');
+        clearRootCookie();
+      }
+
+      // 1. Check URL parameters for cross-domain auth
+      const urlParams = new URLSearchParams(window.location.search);
+      const authParam = urlParams.get('subscriber') || urlParams.get('auth');
+      if (authParam) {
+        syncAllAuthKeys(authParam);
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+      }
+
+      // 2. Check root domain cookie
+      const cookieUser = getRootCookie();
+      if (cookieUser) {
+        syncAllAuthKeys(cookieUser);
+      }
+
+      // Get current active user
+      function getActiveUser() {
+        return localStorage.getItem('dgp_subscriber_email') || 
+               localStorage.getItem('grimaldi_subscriber') || 
+               getRootCookie();
+      }
+
+      // 3. Dynamic URL Link Sync (appends ?auth=user to all cross-subdomain links)
+      function updateCrossDomainLinks() {
+        const user = getActiveUser();
+        if (!user) return;
+
+        const links = document.querySelectorAll('a[href*="grimaldi.tv"]');
+        links.forEach(link => {
+          try {
+            const linkUrl = new URL(link.href);
+            if (!linkUrl.searchParams.has('auth')) {
+              linkUrl.searchParams.set('auth', user);
+              link.href = linkUrl.toString();
+            }
+          } catch(e){}
+        });
+      }
+
+      function addDrawerAuthLink() {
+        const navDiv = document.querySelector('aside .px-5.py-6.flex.flex-col') || 
+                       document.querySelector('aside div.flex.flex-col') ||
+                       document.querySelector('aside nav');
+
+        const currentUser = getActiveUser();
+        updateCrossDomainLinks();
+
+        if (navDiv && !document.getElementById('grimaldi-menu-auth-link')) {
+          const a = document.createElement('a');
+          a.id = 'grimaldi-menu-auth-link';
+          a.className = 'relative px-4 py-3 grit-nav-link border-t border-white/10 mt-2';
+          a.style.cssText = 'color: #3b82f6 !important; font-weight: 700 !important; cursor: pointer; text-decoration: none; display: block; font-family: Oswald, Anton, Impact, sans-serif !important; text-transform: uppercase; font-size: 16px; letter-spacing: 0.08em;';
+          
+          if (currentUser) {
+            a.innerHTML = 'SIGN OUT (' + currentUser.split('@')[0] + ')';
+            a.style.setProperty('color', '#ef4444', 'important');
+            a.onclick = function(e) {
+              e.preventDefault();
+              clearAllAuthKeys();
+              window.location.reload();
+            };
+          } else {
+            a.innerHTML = 'SIGN IN / SIGN OUT';
+            a.onclick = function(e) {
+              e.preventDefault();
+              window.openGrimaldiAuthModal();
+            };
+          }
+          navDiv.appendChild(a);
+        } else if (document.getElementById('grimaldi-menu-auth-link')) {
+          const a = document.getElementById('grimaldi-menu-auth-link');
+          if (currentUser && !a.innerHTML.includes('SIGN OUT')) {
+            a.innerHTML = 'SIGN OUT (' + currentUser.split('@')[0] + ')';
+            a.style.setProperty('color', '#ef4444', 'important');
+            a.onclick = function(e) {
+              e.preventDefault();
+              clearAllAuthKeys();
+              window.location.reload();
+            };
+          } else if (!currentUser && !a.innerHTML.includes('SIGN IN')) {
+            a.innerHTML = 'SIGN IN / SIGN OUT';
+            a.style.setProperty('color', '#3b82f6', 'important');
+            a.onclick = function(e) {
+              e.preventDefault();
+              window.openGrimaldiAuthModal();
+            };
+          }
+        }
+      }
+
+      window.openGrimaldiAuthModal = function() {
+        const modal = document.getElementById('grimaldiAuthModal');
+        if (modal) modal.style.display = 'flex';
+      };
+
+      window.closeGrimaldiAuthModal = function() {
+        const modal = document.getElementById('grimaldiAuthModal');
+        if (modal) modal.style.display = 'none';
+      };
+
+      window.handleGrimaldiSignIn = async function(e) {
+        e.preventDefault();
+        const input = document.getElementById('grimaldiAuthInput');
+        const passInput = document.getElementById('grimaldiAuthPassword');
+        const err = document.getElementById('grimaldiAuthError');
+        const btn = document.getElementById('grimaldiAuthSubmitBtn');
+
+        const val = (input ? input.value : "").trim();
+        const pass = (passInput ? passInput.value : "").toString();
+        if (!val || !pass) return;
+
+        if (btn) { btn.disabled = true; btn.textContent = "Verifying..."; }
+        if (err) err.style.display = 'none';
+
+        try {
+          const res = await fetch("https://ai.grimaldi.tv/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ username: val, password: pass })
+          });
+
+          const data = await res.json();
+
+          if (data && data.ok) {
+            const matchedName = data.username || val;
+            syncAllAuthKeys(matchedName);
+            window.closeGrimaldiAuthModal();
+            window.location.reload();
+          } else {
+            if (err) {
+              err.textContent = "❌ " + (data.error || "Incorrect username/email or password.");
+              err.style.display = 'block';
+            }
+            if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
+          }
+        } catch (errEv) {
+          if (err) {
+            err.textContent = "❌ Authentication network error. Please try again.";
+            err.style.display = 'block';
+          }
+          if (btn) { btn.disabled = false; btn.textContent = "Sign In & Unlock All"; }
+        }
+      };
+
+      setInterval(addDrawerAuthLink, 250);
+    })();
+  </script>
+
+</body>
 </html>
